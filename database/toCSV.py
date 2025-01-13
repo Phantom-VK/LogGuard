@@ -2,7 +2,7 @@ import sqlite3
 import csv
 
 
-def query_database(db_name='event_logs.db', table_name='session_logs'):
+def query_database(db_name, table_name='session_logs'):
     """
     Query all data from the specified database table.
 

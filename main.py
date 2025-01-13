@@ -3,14 +3,16 @@ from collections import defaultdict
 from datetime import datetime
 
 from backend.analyzer import save_to_json
+from database.toCSV import query_database, save_to_csv
 from backend.event_logger import get_session_logs
+from database.logdb import save_to_database
 
 if __name__ == '__main__':
 
     # Example usage with minutes
     print("Analyzing recent login activity...")
     start_time = time.time()
-    logons, logoffs = get_session_logs(minutes_back=30)
+    logons, logoffs = get_session_logs(days_back=1)
 
     print(f"\nFound {len(logons)} human user sessions")
 
@@ -32,7 +34,10 @@ if __name__ == '__main__':
     # Save logs with timestamp in filename
     output_file = save_to_json(logons, filename='session_logons.json')
     output_file2 = save_to_json(logoffs, filename='session_logoffs.json')
-
+    save_to_database(logs=logons, db_name='event_logons.db')
+    save_to_database(logs=logoffs, db_name='event_logoffs.db')
+    save_to_csv(query_database(db_name='event_logons.db'), filename='exported_logons.csv')
+    save_to_csv(query_database(db_name='event_logoffs.db'), filename='exported_logooffs.csv')
     end_time = time.time()
-    print(f"\nDetailed logs saved to {output_file} & {output_file2}")
+    # print(f"\nDetailed logs saved to {output_file} & {output_file2}")
     print(f"Time taken ${end_time - start_time}")
