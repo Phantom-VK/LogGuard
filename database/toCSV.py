@@ -2,14 +2,33 @@ import sqlite3
 import csv
 import pandas as pd
 Export_fields = [
-'timestamp',
+    'timestamp',
     'event_type',
     'user',
-    'status',
+    'domain',
+    'user_sid',
+    'account_type',
     'logon_type',
+    'status',
+    'failure_reason',
+    'logon_id',
+    'session_duration',
+    'source_ip',
+    'destination_ip',
+    'workstation_name',
     'is_business_hours',
-    'risk_factors'
+    'day_of_week',
+    'hour_of_day',
+    'elevated_token',
+    'risk_factors',
+    'risk_score',
+    'authentication_method',
+    'event_id',
+    'event_task_category',
+    'target_user_name',
+    'caller_process_name'
 ]
+
 def query_database(db_name, table_name='session_logs'):
     """
     Query all data from the specified database table.
