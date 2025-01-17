@@ -4,7 +4,7 @@ import json
 
 def save_to_database(logs, db_name):
     """
-    Save logs to an SQLite database.
+    Save logs to an SQLite database, ensuring no duplicate rows are inserted.
     """
     try:
         # Connect to SQLite database
@@ -16,7 +16,7 @@ def save_to_database(logs, db_name):
             CREATE TABLE IF NOT EXISTS session_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 logon_type TEXT,
-                timestamp TEXT,
+                timestamp TEXT UNIQUE,  -- Ensures timestamp is unique for duplicate prevention
                 day_of_week TEXT,
                 hour_of_day INTEGER,
                 is_business_hours BOOLEAN,
@@ -48,7 +48,7 @@ def save_to_database(logs, db_name):
         for log in logs:
             formatted_logs.append({
                 'logon_type': log.get('logon_type', ''),
-                'timestamp': log.get('timestamp', ''),
+                'timestamp': log.get('timestamp', ''),  # Use this as a unique field
                 'day_of_week': log.get('day_of_week', ''),
                 'hour_of_day': log.get('hour_of_day', 0),
                 'is_business_hours': log.get('is_business_hours', False),
@@ -74,9 +74,9 @@ def save_to_database(logs, db_name):
                 'caller_process_name': log.get('caller_process_name', '')
             })
 
-        # Insert logs into the table
+        # Insert logs into the table using INSERT OR IGNORE
         cursor.executemany("""
-            INSERT INTO session_logs (
+            INSERT OR IGNORE INTO session_logs (
                 logon_type, timestamp, day_of_week, hour_of_day, is_business_hours, user,
                 domain, user_sid, account_type, event_type, logon_id, session_duration,
                 source_ip, destination_ip, workstation_name, status, failure_reason,
