@@ -73,6 +73,7 @@ def get_session_logs(minutes_back=None, days_back=None):
 
                 if event.EventID in [4624, 4634, 4625]:
                     data = event.StringInserts or []
+                    # print(data)
                     log_entry = process_event(event, data, event_time)
 
                     if log_entry and log_entry['event_type'] == 'Logoff':
@@ -116,10 +117,12 @@ def process_event(event, data, timestamp):
     }
 
     try:
-        if event.EventID == 4624:  # Successful logon
+        if event.EventID == 4624:
+            # Successful logon
+            #print(f"Log ON data, length: {len(data)}")
             return process_logon(data, base_entry)
         elif event.EventID == 4634:  # Logoff
-            print(f'Logoff detected, length: {len(data)}')
+            #print(f'Logoff detected, length: {len(data)}')
             return process_logoff(data, base_entry)
         elif event.EventID == 4625:  # Failed logon
             return process_failed_logon(data, base_entry)

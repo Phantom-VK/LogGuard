@@ -28,6 +28,7 @@ def save_to_database(logs, db_name):
                 hour_of_day INTEGER,
                 is_business_hours BOOLEAN,
                 risk_factors TEXT
+                
             )
         """)
 
