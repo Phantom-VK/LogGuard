@@ -6,6 +6,7 @@ from backend.analyzer import save_to_json
 from database.toCSV import query_database, save_to_csv
 from backend.event_logger import get_session_logs
 from database.logdb import save_to_database
+from scheduling.periodic import periodic_task
 
 if __name__ == '__main__':
 
@@ -42,3 +43,8 @@ if __name__ == '__main__':
     end_time = time.time()
     # print(f"\nDetailed logs saved to {output_file} & {output_file2}")
     print(f"Time taken ${end_time - start_time}")
+    
+    #periodic task call
+    periodic_task()
+    while True:
+        print(end="")
