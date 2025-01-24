@@ -12,8 +12,9 @@ if __name__ == '__main__':
     # Example usage with minutes
     print("Analyzing recent login activity...")
     start_time = time.time()
-    logons, logoffs = get_session_logs(days_back=1)
-
+    logons, logoffs = get_session_logs(days_back=10)
+    # print(logons)
+    # print(logoffs)
     print(f"\nFound {len(logons)} human user sessions")
 
     # Show time range of logs
@@ -34,10 +35,10 @@ if __name__ == '__main__':
     # Save logs with timestamp in filename
     output_file = save_to_json(logons, filename='session_logons.json')
     output_file2 = save_to_json(logoffs, filename='session_logoffs.json')
-    save_to_database(logs=logons, db_name='event_logons.db')
-    save_to_database(logs=logoffs, db_name='event_logoffs.db')
-    save_to_csv(query_database(db_name='event_logons.db'), filename='exported_logons.csv')
-    save_to_csv(query_database(db_name='event_logoffs.db'), filename='exported_logooffs.csv')
+    save_to_database(logs=logons, db_name='event_logons_02.db')
+    save_to_database(logs=logoffs, db_name='event_logoffs_02.db')
+    save_to_csv(query_database(db_name='event_logons_02.db'), filename='exported_logons.csv')
+    save_to_csv(query_database(db_name='event_logoffs_02.db'), filename='exported_logoffs.csv')
     end_time = time.time()
     # print(f"\nDetailed logs saved to {output_file} & {output_file2}")
     print(f"Time taken ${end_time - start_time}")
