@@ -55,7 +55,7 @@ def get_session_logs(minutes_back=None, days_back=None):
                         session_logoffs.append(log_entry)
                     elif log_entry['status'] == 'failed':
                         session_logons.append(log_entry)
-                        print(f"Processing Event ID: {event.EventID}, Status: {log_entry['status']}")
+                        # print(f"Processing Event ID: {event.EventID}, Status: {log_entry['status']}")
                     elif log_entry and analyzer.is_human_session(log_entry):
                         log_entry = assess_risk(log_entry)
                         session_logons.append(log_entry)

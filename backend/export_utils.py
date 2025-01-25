@@ -1,6 +1,6 @@
 import json
 import logging
-
+import os
 import pandas as pd
 
 
@@ -12,7 +12,6 @@ def save_to_json(logs, filename):
         logging.info(f"Logs saved to {filename}")
     except Exception as e:
         logging.error(f"Failed to save logs: {e}")
-
 
 def save_to_csv(data, filename='exported_logs.csv'):
     """
@@ -26,15 +25,22 @@ def save_to_csv(data, filename='exported_logs.csv'):
         return
 
     try:
-        # Write data to CSV
-        # with open(filename, 'w', newline='', encoding='utf-8') as f:
-        #     writer = csv.DictWriter(f, fieldnames=data[0].keys())
-        #     writer.writeheader()
-        #     writer.writerows(data)
-        # print(f"Data successfully exported to {filename}")
+        # Convert data to a DataFrame
         df = pd.DataFrame(data)
+
+        # Remove duplicates
         df_unique = df.drop_duplicates(keep='first')
-        df_unique.to_csv(filename,index=False)
-        print(f"Data successfully exported to {filename}")
+
+        # Check if the file exists
+        if not os.path.exists(filename):
+            # If the file doesn't exist, create it
+            df_unique.to_csv(filename, index=False)
+            print(f"Data successfully exported to {filename} (created new file).")
+        else:
+            # If the file exists, append to it
+            df_existing = pd.read_csv(filename)
+            combined_df = pd.concat([df_existing, df_unique]).drop_duplicates(keep='first')
+            combined_df.to_csv(filename, index=False)
+            print(f"Data successfully appended to {filename}.")
     except Exception as e:
         print(f"Error saving data to CSV: {e}")
