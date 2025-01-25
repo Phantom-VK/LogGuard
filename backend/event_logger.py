@@ -76,15 +76,25 @@ def assess_risk(log_entry):
     risk_factors = []
 
     if log_entry['logon_type'] == 'RemoteInteractive':
-        risk_score += 20
+        risk_score += 20  # High risk for remote access
         risk_factors.append("Remote Interactive Logon")
     if not log_entry['source_ip']:
-        risk_score += 10
+        risk_score += 10  # Missing source IP adds risk
         risk_factors.append("Missing Source IP")
     if log_entry['elevated_token']:
-        risk_score += 30
-        risk_factors.append("Elevated Token")
+        risk_score += 30  # Privileged access
+        risk_factors.append("Elevated token")
+    if not log_entry['is_business_hours']:
+        risk_score += 15  # Activity outside business hours
+        risk_factors.append("Outside Buisness Hours")
+    if log_entry.get('concurrent_sessions', False):
+        risk_score += 25  # Concurrent logins are suspicious
+        risk_factors.append("Concurrent logins")
+    if log_entry.get('rapid_logins', False):
+        risk_score += 30  # Indicates brute-force attacks
+        risk_factors.append("Rapid Logins")
 
     log_entry['risk_score'] = risk_score
     log_entry['risk_factors'] = risk_factors
+
     return log_entry
