@@ -22,5 +22,3 @@ def enable_failed_login_auditing():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-# Call the function
-enable_failed_login_auditing()

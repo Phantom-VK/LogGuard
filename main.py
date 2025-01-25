@@ -5,12 +5,14 @@ from datetime import datetime
 from backend.export_utils import save_to_json, save_to_csv
 from backend.event_logger import get_session_logs
 from database.db_utils import save_to_database, query_database
-
+from enableEV import enable_failed_login_auditing
 if __name__ == '__main__':
 
     # Example usage with minutes
     print("Analyzing recent login activity...")
+
     start_time = time.time()
+    enable_failed_login_auditing()
     logons, logoffs = get_session_logs(days_back=7)
     # print(logons)
     # print(logoffs)
