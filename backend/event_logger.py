@@ -45,7 +45,7 @@ def get_session_logs(minutes_back=None, days_back=None):
         elif days_back is not None:
             cutoff_time = datetime.now() - timedelta(days=days_back)
         else:
-            cutoff_time = datetime.now() - timedelta(days=7)  # Default to 7 days
+            cutoff_time = datetime.now() - timedelta(days=100)  # Default to 7 days
 
         while True:
             events = win32evtlog.ReadEventLog(hand, flags, 0)
@@ -66,6 +66,9 @@ def get_session_logs(minutes_back=None, days_back=None):
 
                     if log_entry and log_entry['event_type'] == 'Logoff':
                         session_logoffs.append(log_entry)
+                    elif log_entry['status'] =='failed':
+                        session_logons.append(log_entry)
+                        # print(f"Processing Event ID: {event.EventID}, Status: {log_entry['status']}")
                     elif log_entry and analyzer.is_human_session(log_entry):
                         log_entry = assess_risk(log_entry)
                         session_logons.append(log_entry)
