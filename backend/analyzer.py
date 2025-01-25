@@ -1,4 +1,3 @@
-import json
 from collections import defaultdict
 from datetime import datetime
 import logging
@@ -168,11 +167,3 @@ class SessionAnalyzer:
             return None
 
 
-def save_to_json(logs, filename):
-    """Save logs to JSON format."""
-    try:
-        with open(filename, 'w') as f:
-            json.dump(logs, f, indent=2)
-        logging.info(f"Logs saved to {filename}")
-    except Exception as e:
-        logging.error(f"Failed to save logs: {e}")
