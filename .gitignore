@@ -4,3 +4,9 @@ exported_logoffs.csv
 exported_logons.csv
 event_logoffs_02.db
 event_logons_02.dbgit
+/exports/exported_logoffs.csv
+/exports/exported_logons.csv
+/exports/session_logoffs.json
+/exports/session_logons.json
+/database/event_logoffs_02.db
+/database/event_logons_02.db
