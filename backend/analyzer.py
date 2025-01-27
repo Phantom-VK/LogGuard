@@ -93,7 +93,7 @@ class SessionAnalyzer:
             risk_factors.append('outside_business_hours')
 
         if user in self.session_history:
-            if self._is_rapid_login(log_entry):
+            if self.is_rapid_login(log_entry):
                 risk_factors.append('rapid_login_attempts')
 
         # Calculate risk score

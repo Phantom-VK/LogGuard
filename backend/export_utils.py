@@ -122,13 +122,11 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
     # Define ML-relevant columns to save
     ml_columns = [
         'timestamp',
-        'user',
         'status',
         'is_rapid_login',
         'is_business_hours',
         'risk_score',
         'logon_type',
-        'source_ip'
     ]
 
     try:
