@@ -11,6 +11,7 @@ if __name__ == '__main__':
     # Example usage with minutes
     print("Analyzing recent login activity...")
 
+
     start_time = time.time()
     enable_failed_login_auditing()
     logons, logoffs = get_session_logs(days_back=7)
