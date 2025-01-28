@@ -1,4 +1,3 @@
-import json
 import sqlite3
 
 Export_fields = [
@@ -7,155 +6,82 @@ Export_fields = [
     'user',
     'domain',
     'user_sid',
-    'account_type',
     'logon_type',
     'status',
     'failure_reason',
     'logon_id',
     'session_duration',
     'source_ip',
-    'destination_ip',
     'workstation_name',
     'is_business_hours',
+    'is_rapid_logon',
     'day_of_week',
     'hour_of_day',
-    'elevated_token',
-    'risk_factors',
     'risk_score',
-    'authentication_method',
     'event_id',
     'event_task_category',
-    'target_user_name',
-    'caller_process_name'
 ]
 
 
-def query_database(db_name, table_name='session_logs'):
-    """
-    Query all data from the specified database table.
-
-    :param db_name: Name of the SQLite database file.
-    :param table_name: Name of the table to query.
-    :return: A list of dictionaries containing the query results.
-    """
-    try:
-        # Connect to the SQLite database
-        conn = sqlite3.connect(db_name)
-        cursor = conn.cursor()
-
-        # Execute query to fetch all rows from the table
-        # cursor.execute(f"SELECT * FROM {table_name}")
-        # rows = cursor.fetchall()
-
-        fields_str = ', '.join(Export_fields)
-        query = f"SELECT {fields_str} FROM {table_name}"
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        # Fetch column names
-        # columns = [desc[0] for desc in cursor.description]
-
-        # Convert rows into a list of dictionaries
-        # data = [dict(zip(columns, row)) for row in rows]
-        data = [dict(zip(Export_fields, row)) for row in rows]
-        conn.close()
-        return data
-    except sqlite3.Error as e:
-        print(f"Database error: {str(e)}")
-        return []
-    except Exception as e:
-        print(f"Error querying database: {e}")
-        return []
+def ensure_columns_exist(cursor, table_name, columns):
+    """Ensure all required columns exist in the table schema."""
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_columns = {col[1] for col in cursor.fetchall()}
+    for col in columns:
+        if col not in existing_columns:
+            cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {col} TEXT")
 
 
 def save_to_database(logs, db_name):
-    """
-    Save logs to an SQLite database, ensuring no duplicate rows are inserted.
-    """
+    """Save logs to an SQLite database, ensuring no duplicate rows are inserted."""
+    if not logs:
+        print("No logs to save.")
+        return
+
     try:
         # Connect to SQLite database
         conn = sqlite3.connect(db_name)
         cursor = conn.cursor()
 
-        # Create table if not exists
-        cursor.execute("""
+        # Create the session_logs table if it doesn't exist
+        cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS session_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                logon_type TEXT,
-                timestamp TEXT UNIQUE,  -- Ensures timestamp is unique for duplicate prevention
-                day_of_week TEXT,
-                hour_of_day INTEGER,
-                is_business_hours BOOLEAN,
+                timestamp TEXT,
+                event_type TEXT,
                 user TEXT,
                 domain TEXT,
                 user_sid TEXT,
-                account_type TEXT,
-                event_type TEXT,
+                logon_type TEXT,
+                status TEXT,
+                failure_reason TEXT,
                 logon_id TEXT,
                 session_duration REAL,
                 source_ip TEXT,
-                destination_ip TEXT,
                 workstation_name TEXT,
-                status TEXT,
-                failure_reason TEXT,
-                elevated_token BOOLEAN,
-                risk_factors TEXT,
+                is_business_hours BOOLEAN,
+                is_rapid_logon BOOLEAN,
+                day_of_week TEXT,
+                hour_of_day INTEGER,
                 risk_score REAL,
-                authentication_method TEXT,
                 event_id INTEGER,
-                event_task_category TEXT,
-                target_user_name TEXT,
-                caller_process_name TEXT
+                event_task_category TEXT
             )
         """)
+
+        # Ensure all required columns exist
+        ensure_columns_exist(cursor, "session_logs", Export_fields)
 
         # Prepare logs for insertion
         formatted_logs = []
         for log in logs:
-            formatted_logs.append({
-                'logon_type': log.get('logon_type', ''),
-                'timestamp': log.get('timestamp', ''),  # Use this as a unique field
-                'day_of_week': log.get('day_of_week', ''),
-                'hour_of_day': log.get('hour_of_day', 0),
-                'is_business_hours': log.get('is_business_hours', False),
-                'user': log.get('user', ''),
-                'domain': log.get('domain', ''),
-                'user_sid': log.get('user_sid', ''),
-                'account_type': log.get('account_type', ''),
-                'event_type': log.get('event_type', ''),
-                'logon_id': log.get('logon_id', ''),
-                'session_duration': log.get('session_duration', 0.0),
-                'source_ip': log.get('source_ip', ''),
-                'destination_ip': log.get('destination_ip', ''),
-                'workstation_name': log.get('workstation_name', ''),
-                'status': log.get('status', ''),
-                'failure_reason': log.get('failure_reason', ''),
-                'elevated_token': log.get('elevated_token', False),
-                'risk_factors': json.dumps(log.get('risk_factors', [])),  # Store as JSON string
-                'risk_score': log.get('risk_score', 0.0),
-                'authentication_method': log.get('authentication_method', ''),
-                'event_id': log.get('event_id', 0),
-                'event_task_category': log.get('event_task_category', ''),
-                'target_user_name': log.get('target_user_name', ''),
-                'caller_process_name': log.get('caller_process_name', '')
-            })
+            formatted_log = {field: log.get(field, '') for field in Export_fields}
+            formatted_logs.append(formatted_log)
 
-        # Insert logs into the table using INSERT OR IGNORE
-        cursor.executemany("""
-            INSERT OR IGNORE INTO session_logs (
-                logon_type, timestamp, day_of_week, hour_of_day, is_business_hours, user,
-                domain, user_sid, account_type, event_type, logon_id, session_duration,
-                source_ip, destination_ip, workstation_name, status, failure_reason,
-                elevated_token, risk_factors, risk_score, authentication_method,
-                event_id, event_task_category, target_user_name, caller_process_name
-            )
-            VALUES (
-                :logon_type, :timestamp, :day_of_week, :hour_of_day, :is_business_hours, :user,
-                :domain, :user_sid, :account_type, :event_type, :logon_id, :session_duration,
-                :source_ip, :destination_ip, :workstation_name, :status, :failure_reason,
-                :elevated_token, :risk_factors, :risk_score, :authentication_method,
-                :event_id, :event_task_category, :target_user_name, :caller_process_name
-            )
-        """, formatted_logs)
+        # Insert logs into the table
+        fields_str, placeholders = ', '.join(Export_fields), ', '.join([f":{field}" for field in Export_fields])
+        query = f"INSERT OR IGNORE INTO session_logs ({fields_str}) VALUES ({placeholders})"
+        cursor.executemany(query, formatted_logs)
 
         # Commit changes and close the connection
         conn.commit()
@@ -164,3 +90,40 @@ def save_to_database(logs, db_name):
         print(f"Logs successfully saved to database: {db_name}")
     except Exception as e:
         print(f"Error saving logs to database: {e}")
+
+
+def query_database(db_name, table_name='session_logs'):
+    """Query selected columns from the database."""
+    try:
+        conn = sqlite3.connect(db_name)
+        cursor = conn.cursor()
+
+        # Define columns to fetch
+        selected_columns = [
+            'timestamp',
+            'user',
+            'status',
+            'is_rapid_login',
+            'is_business_hours',
+            'risk_score',
+            'logon_type',
+            'source_ip'
+        ]
+        ensure_columns_exist(cursor, table_name, selected_columns)
+
+        # Query the database
+        fields_str = ', '.join(selected_columns)
+        query = f"SELECT {fields_str} FROM {table_name}"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # Convert rows into dictionaries
+        data = [dict(zip(selected_columns, row)) for row in rows]
+        conn.close()
+        return data
+    except sqlite3.Error as e:
+        print(f"Database error: {str(e)}")
+        return []
+    except Exception as e:
+        print(f"Error querying database: {e}")
+        return []

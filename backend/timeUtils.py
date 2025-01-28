@@ -1,29 +1,36 @@
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
+from typing import Union
+
+from dateutil import parser
 
 
-def parse_timestamp(time_str):
-    """Parse different timestamp formats and return standardized datetime string"""
+def parse_timestamp(
+        time_str: Union[str, datetime, None]
+) -> str:
+    """
+    Parse timestamp with timezone handling.
+
+    Args:
+        time_str: Input timestamp
+    Returns:
+        Standardized datetime string
+    Raises:
+        ValueError: If timestamp is invalid
+    """
+    if time_str is None:
+        raise ValueError("Timestamp cannot be None")
+
     try:
-        formats = [
-            '%Y-%m-%d %H:%M:%S',
-            '%a %b %d %H:%M:%S %Y',  # Sat Jan 4 16:49:15 2025
-            '%m/%d/%Y %H:%M:%S'
-        ]
-
-        # If time_str is already a datetime object
         if isinstance(time_str, datetime):
-            return time_str.strftime('%Y-%m-%d %H:%M:%S')
+            dt = time_str
+        else:
+            dt = parser.parse(str(time_str))
 
-        # Try each format
-        for fmt in formats:
-            try:
-                return datetime.strptime(time_str, fmt).strftime('%Y-%m-%d %H:%M:%S')
-            except ValueError:
-                continue
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
 
-        # Try parsing with datetime object
-        return datetime.strptime(str(time_str), '%c').strftime('%Y-%m-%d %H:%M:%S')
-
+        return dt.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     except Exception as e:
-        print(f"Error parsing timestamp {time_str}: {e}")
-        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        logging.error(f"Error parsing timestamp {time_str}: {e}")
+        raise ValueError(f"Invalid timestamp format: {time_str}")
