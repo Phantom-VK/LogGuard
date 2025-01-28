@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-
+from data_clean import clean_csv
 from backend.event_logger import get_session_logs
 from backend.export_utils import save_to_json, save_to_csv, save_json_file_to_csv
 from database.db_utils import save_to_database, query_database
@@ -101,6 +101,7 @@ class LogAnalyzer:
             save_to_csv(query_database(db_name=str(logons_db)), 'exported_logons.csv')
             save_to_csv(query_database(db_name=str(logoffs_db)), 'exported_logoffs.csv')
             save_json_file_to_csv(json_file1)
+            clean_csv('exported_logs.csv')
 
             logging.info(f"Data exported successfully to {json_file1} & {json_file2}")
             return json_file1, json_file2

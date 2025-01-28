@@ -60,7 +60,7 @@ def save_to_database(logs, db_name):
                 source_ip TEXT,
                 workstation_name TEXT,
                 is_business_hours BOOLEAN,
-                is_rapid_logon BOOLEAN,
+                is_rapid_login BOOLEAN,
                 day_of_week TEXT,
                 hour_of_day INTEGER,
                 risk_score REAL,

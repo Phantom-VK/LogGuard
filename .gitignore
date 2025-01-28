@@ -12,4 +12,5 @@ event_logoffs_02.db
 /exports/session_logons.json
 /database/event_logoffs_02.db
 /database/event_logons_02.db
+clean.csv
 .venv
