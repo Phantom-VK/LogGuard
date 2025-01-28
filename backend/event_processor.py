@@ -64,7 +64,7 @@ def create_base_entry(event: Any, timestamp: str) -> Dict[str, Any]:
             'logon_type': '',
             'source_ip': '',
             'destination_ip': '',
-            'is_rapid_logon': False,
+            'is_rapid_logon': '',
             'workstation_name': '',
             'failure_reason': '',
             'process_name': '',

@@ -73,33 +73,6 @@ class SessionAnalyzer:
                 and logon_type in {'Interactive', 'RemoteInteractive', 'CachedInteractive', 'Unlock'}
         )
 
-    def enrich_log_entry(self, log_entry):
-        """
-        Analyze and enrich a log entry with risk factors and a risk score.
-        :param log_entry: Dictionary containing log details.
-        """
-        # Validate input
-        if not isinstance(log_entry, dict) or 'timestamp' not in log_entry:
-            raise ValueError("Invalid log entry format")
-
-        user = log_entry.get('user')
-        timestamp = log_entry.get('timestamp')
-
-        risk_factors = []
-
-        # Analyze risk factors
-
-        if not self.is_business_hours(timestamp):
-            risk_factors.append('outside_business_hours')
-
-        if user in self.session_history:
-            if self.is_rapid_login(log_entry):
-                risk_factors.append('rapid_login_attempts')
-
-        # Calculate risk score
-        log_entry['risk_factors'] = risk_factors
-        log_entry['risk_score'] = sum(self.RISK_WEIGHTS[risk] for risk in risk_factors)
-
     def is_business_hours(self, timestamp):
         """
         Check if the given timestamp falls within business hours.
@@ -138,3 +111,30 @@ class SessionAnalyzer:
         ]
 
         return len(recent_attempts) >= 3
+
+    def enrich_log_entry(self, log_entry):
+        """
+        Analyze and enrich a log entry with risk factors and a risk score.
+        :param log_entry: Dictionary containing log details.
+        """
+        # Validate input
+        if not isinstance(log_entry, dict) or 'timestamp' not in log_entry:
+            raise ValueError("Invalid log entry format")
+
+        user = log_entry.get('user')
+        timestamp = log_entry.get('timestamp')
+
+        risk_factors = []
+
+        # Analyze risk factors
+
+        if not self.is_business_hours(timestamp):
+            risk_factors.append('outside_business_hours')
+
+        if user in self.session_history:
+            if self.is_rapid_login(log_entry):
+                risk_factors.append('rapid_login_attempts')
+
+        # Calculate risk score
+        log_entry['risk_factors'] = risk_factors
+        log_entry['risk_score'] = sum(self.RISK_WEIGHTS[risk] for risk in risk_factors)

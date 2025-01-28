@@ -1,33 +1,75 @@
 import logging
+import os
+import sys
 import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from data_clean import clean_csv
+from typing import Dict, Optional, Tuple
+
 from backend.event_logger import get_session_logs
-from backend.export_utils import save_to_json, save_to_csv, save_json_file_to_csv
-from database.db_utils import save_to_database, query_database
+from backend.export_utils import save_to_json, save_json_file_to_csv
+from data_clean import clean_csv
 from enableEV import enable_failed_login_auditing
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
-)
+def setup_logging(log_dir: Path):
+    """Setup logging with proper path handling"""
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / f"logguard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+
+
+def get_base_path():
+    """Get base path for the application, handling both development and executable environments"""
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundle
+        return Path(sys._MEIPASS)
+    else:
+        # If the application is run from a Python interpreter
+        return Path(os.path.dirname(os.path.abspath(__file__)))
 
 
 class LogAnalyzer:
     def __init__(self):
-        self.logons: List[Dict] = []
-        self.logoffs: List[Dict] = []
-        self.start_time: float = 0
-        self.export_dir = Path('exports')
-        self.database_dir = Path('database')
+        self.logons = []
+        self.logoffs = []
+
+        # Set up base directory for the application
+        if getattr(sys, 'frozen', False):
+            base_dir = Path(os.environ.get('APPDATA')) / "LogGuard"
+        else:
+            base_dir = Path.cwd()
+
+        # Centralized export folder
+        self.export_dir = base_dir / 'Exports'
+
+        # Create the export folder if it doesn't exist
+        self.export_dir.mkdir(parents=True, exist_ok=True)
+
+        # Configure logging
+        log_file = self.export_dir / "logguard.log"
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()
+            ]
+        )
+
+    def get_export_path(self, filename):
+        """Helper to get the full path for a file in the export directory."""
+        return str(self.export_dir / filename)
 
     def setup_directories(self) -> None:
         """Create necessary directories if they don't exist."""
@@ -82,41 +124,38 @@ class LogAnalyzer:
             logging.error(f"Error analyzing risk distribution: {e}")
             return {}
 
-    def export_data(self) -> Tuple[str, str]:
-        """Export logs to files and database."""
+    def export_data(self):
+        """Export logs to JSON, CSV, and cleaned CSV files."""
         try:
-            # Save to JSON
-            logons_json = self.export_dir / 'session_logons.json'
-            logoffs_json = self.export_dir / 'session_logoffs.json'
-            json_file1 = save_to_json(self.logons, str(logons_json))
-            json_file2 = save_to_json(self.logoffs, str(logoffs_json))
+            # Export JSON files
+            logons_json_path = self.get_export_path('session_logons.json')
+            logoffs_json_path = self.get_export_path('session_logoffs.json')
+            save_to_json(self.logons, logons_json_path)
+            save_to_json(self.logoffs, logoffs_json_path)
 
-            # Save to database
-            logons_db = self.database_dir / 'event_logons_02.db'
-            logoffs_db = self.database_dir / 'event_logoffs_02.db'
-            save_to_database(logs=self.logons, db_name=str(logons_db))
-            save_to_database(logs=self.logoffs, db_name=str(logoffs_db))
+            # Export CSV files
+            logons_csv_path = self.get_export_path('exported_logons.csv')
+            csv_path = save_json_file_to_csv(logons_json_path, logons_csv_path)
+            if not csv_path or not os.path.exists(csv_path):
+                raise FileNotFoundError(f"Failed to create CSV file: {csv_path}")
+            # Clean CSV file
+            cleaned_csv_path = self.get_export_path('cleaned_logons.csv')
+            clean_csv(logons_csv_path, cleaned_csv_path)
 
-            # Export to CSV
-            save_to_csv(query_database(db_name=str(logons_db)), 'exported_logons.csv')
-            save_to_csv(query_database(db_name=str(logoffs_db)), 'exported_logoffs.csv')
-            save_json_file_to_csv(json_file1)
-            clean_csv('exported_logs.csv')
-
-            logging.info(f"Data exported successfully to {json_file1} & {json_file2}")
-            return json_file1, json_file2
+            logging.info("Export process completed successfully.")
         except Exception as e:
-            logging.error(f"Error exporting data: {e}")
+            logging.error(f"Error during export: {e}")
             raise
 
 
 def main():
-    start_time = time.time()
-    analyzer = LogAnalyzer()
-
     try:
-        # Setup
-        analyzer.setup_directories()
+        # Create analyzer instance
+        analyzer = LogAnalyzer()
+
+        # Log start of execution
+        logging.info("Starting LogGuard application...")
+        start_time = time.time()
 
         # Collect and analyze logs
         analyzer.collect_logs(days_back=30)
@@ -124,20 +163,22 @@ def main():
         analyzer.analyze_risk_distribution()
 
         # Export data
-        json_file1, json_file2 = analyzer.export_data()
+        analyzer.export_data()
 
-        # Calculate and log execution time
+        # Log execution time
         execution_time = time.time() - start_time
         logging.info(f"Total execution time: {execution_time:.2f} seconds")
 
+        # Pause for user input (only for executables)
+        if getattr(sys, 'frozen', False):
+            os.system("pause")  # Use pause for Windows
     except Exception as e:
-        logging.error(f"Error in main execution: {e}")
-        raise
+        logging.critical(f"Application failed: {e}")
+        if getattr(sys, 'frozen', False):
+            # Gracefully exit without input() for executables
+            logging.error("Exiting due to error.")
+        sys.exit(1)
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        logging.critical(f"Application failed: {e}")
-        exit(1)
+    main()
