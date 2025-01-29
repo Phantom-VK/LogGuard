@@ -13,4 +13,7 @@ event_logoffs_02.db
 /database/event_logoffs_02.db
 /database/event_logons_02.db
 clean.csv
+exports/cleaned_logons.csv
+event_logs.log
+
 .venv
