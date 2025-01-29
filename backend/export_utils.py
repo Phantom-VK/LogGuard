@@ -161,8 +161,8 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
             return None
 
         # Save to CSV
-        df_filtered['result'] = df_filtered['risk_score'].apply(check_result)
         df_filtered['weekday'] = df_filtered['day_of_week'].apply(check_result)
+        df_filtered['result'] = df_filtered['risk_score'].apply(check_result)
         df_filtered.to_csv(csv_file_path, index=False)
         logging.info(f"Data successfully saved to {csv_file_path}")
         return csv_file_path

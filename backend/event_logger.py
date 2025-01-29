@@ -136,11 +136,11 @@ def assess_risk(log_entry: Dict[str, Any]) -> Dict[str, Any]:
         # Calculate risk score
         risk_score = 0
         if not is_business_hours:
-            risk_score += 15
+            risk_score += 1
         if is_rapid_login:
-            risk_score += 30
+            risk_score += 3
         if log_entry.get('status') == 'failed':
-            risk_score += 20
+            risk_score += 2
 
         # Update log entry with ML features
         log_entry.update({

@@ -31,8 +31,8 @@ def clean_csv(input_csv_path, output_csv_path):
                 df[column] = LabelEncoder().fit_transform(df[column])
 
         # Save the cleaned DataFrame
-        df['result'] = df['risk_score'].apply(check_result)
         df['weekday'] = df['day_of_week'].apply(check_result)
+        df['result'] = df['risk_score'].apply(check_result)
         df.to_csv(output_csv_path, index=False)
         print(f"Cleaned CSV saved to: {output_csv_path}")
     except FileNotFoundError as e:
@@ -42,12 +42,12 @@ def clean_csv(input_csv_path, output_csv_path):
 
 
 def check_result(inpt):
-    dic = {"Sunday": 7, "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6}
+    dic = {"Sunday": 6, "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3, "Friday": 4, "Saturday": 5}
     if type(inpt) == str:
         return dic[inpt]
-    if inpt <= 25:
+    if inpt <= 2:
         return 0
-    elif 25 <= inpt <= 60:
+    elif 2 <= inpt <= 6:
         return 1
     else:
         return 2
