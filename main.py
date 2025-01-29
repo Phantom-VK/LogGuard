@@ -41,6 +41,7 @@ def get_base_path():
 
 class LogAnalyzer:
     def __init__(self):
+        self.database_dir = None
         self.logons = []
         self.logoffs = []
 

@@ -7,6 +7,8 @@ from contextlib import contextmanager
 
 import pandas as pd
 
+from data_clean import check_result
+
 
 @contextmanager
 def windows_file_lock(file_handle):
@@ -113,11 +115,11 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
     ml_columns = [
         'timestamp',
         'status',
+        'day_of_week',
         'is_rapid_login',
         'is_business_hours',
         'risk_score',
-        'logon_type',
-        'source_ip',  # Add if source_ip might be required
+        'logon_type'
     ]
 
     try:
@@ -148,8 +150,7 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
 
         # Ensure 'is_rapid_login' column is mapped to 1 and 0
         if 'is_rapid_login' in df_filtered.columns:
-            df_filtered.loc[:, 'is_rapid_login'] = df_filtered['is_rapid_login'].map({True: 1, False: 0})
-
+            df_filtered.loc[:, 'is_rapid_login'] = df_filtered['is_rapid_login'].astype(bool).map({True: 1, False: 0})
 
         # Remove duplicates
         df_filtered = df_filtered.drop_duplicates(keep='first')
@@ -160,6 +161,8 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
             return None
 
         # Save to CSV
+        df_filtered['result'] = df_filtered['risk_score'].apply(check_result)
+        df_filtered['weekday'] = df_filtered['day_of_week'].apply(check_result)
         df_filtered.to_csv(csv_file_path, index=False)
         logging.info(f"Data successfully saved to {csv_file_path}")
         return csv_file_path
@@ -172,4 +175,3 @@ def save_json_file_to_csv(json_file_path, csv_file_path='exported_logs.csv'):
         logging.error(f"Error saving JSON to CSV: {e}")
 
     return None
-

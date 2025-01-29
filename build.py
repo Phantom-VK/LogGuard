@@ -1,6 +1,7 @@
 import os
 import PyInstaller.__main__
 
+
 def build_exe():
     # Get the directory of the current script
     base_dir = os.path.dirname(os.path.abspath(__file__))

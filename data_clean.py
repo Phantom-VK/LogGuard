@@ -1,4 +1,4 @@
-import logging
+import os
 
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -32,6 +32,7 @@ def clean_csv(input_csv_path, output_csv_path):
 
         # Save the cleaned DataFrame
         df['result'] = df['risk_score'].apply(check_result)
+        df['weekday'] = df['day_of_week'].apply(check_result)
         df.to_csv(output_csv_path, index=False)
         print(f"Cleaned CSV saved to: {output_csv_path}")
     except FileNotFoundError as e:
@@ -40,10 +41,13 @@ def clean_csv(input_csv_path, output_csv_path):
         print(f"Unexpected error while cleaning CSV: {e}")
 
 
-def check_result(num):
-    if num <= 25:
+def check_result(inpt):
+    dic = {"Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6}
+    if type(inpt) == str:
+        return dic[inpt]
+    if inpt <= 25:
         return 0
-    elif 25 <= num <= 60:
+    elif 25 <= inpt <= 60:
         return 1
     else:
         return 2
